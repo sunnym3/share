@@ -1,5 +1,5 @@
 import { render, h } from 'omi'
-import './app.tsx'
-import './index.css'
+import './shareMenu.tsx'
+
 
 render(<share-menu />, document.getElementById('app')!)

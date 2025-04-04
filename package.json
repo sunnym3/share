@@ -10,7 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "omi": "latest"
+    "@types/qrcode": "^1.5.5",
+    "omi": "latest",
+    "qrcode": "^1.5.4"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.16",
