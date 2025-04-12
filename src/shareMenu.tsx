@@ -14,6 +14,8 @@ export default class extends Component {
 
   private dialogElement: HTMLDialogElement | null = null
   private shareButtonElement: HTMLButtonElement | null = null
+  private mediaButtons: HTMLButtonElement[] = []
+  private currentToggledButton: HTMLButtonElement | null = null
 
   static propTypes = {
     name: String,
@@ -24,21 +26,37 @@ export default class extends Component {
     wechat: {
       name: '微信',
       icon: '<svg x="0px" y="0px" width="10" height="10" viewBox="0 0 48 48"><path fill="#8BC34A" d="M18,6C9.2,6,2,12,2,19.5c0,4.3,2.3,8,6,10.5l-2,6l6.3-3.9C14,32.7,16,33,18,33c8.8,0,16-6,16-13.5C34,12,26.8,6,18,6z"></path><path fill="#7CB342" d="M20,29c0-6.1,5.8-11,13-11c0.3,0,0.6,0,0.9,0c-0.1-0.7-0.3-1.4-0.5-2c-0.1,0-0.3,0-0.4,0c-8.3,0-15,5.8-15,13c0,1.4,0.3,2.7,0.7,4c0.7,0,1.4-0.1,2.1-0.2C20.3,31.6,20,30.3,20,29z"></path><path fill="#CFD8DC" d="M46,29c0-6.1-5.8-11-13-11c-7.2,0-13,4.9-13,11s5.8,11,13,11c1.8,0,3.5-0.3,5-0.8l5,2.8l-1.4-4.8C44.3,35.2,46,32.3,46,29z"></path><path fill="#33691E" d="M14,15c0,1.1-0.9,2-2,2s-2-0.9-2-2s0.9-2,2-2S14,13.9,14,15z M24,13c-1.1,0-2,0.9-2,2s0.9,2,2,2s2-0.9,2-2S25.1,13,24,13z"></path><path fill="#546E7A" d="M30,26.5c0,0.8-0.7,1.5-1.5,1.5S27,27.3,27,26.5s0.7-1.5,1.5-1.5S30,25.7,30,26.5z M37.5,25c-0.8,0-1.5,0.7-1.5,1.5s0.7,1.5,1.5,1.5s1.5-0.7,1.5-1.5S38.3,25,37.5,25z"></path></svg>',
-      handleShare: async (data: any) => {
-        const url = 'https://www.baidu.com/index.php?tn=75144485_1_dg&ch=9'
-        if (data.meta.isMobile) {
-          // 移动端使用 URL Scheme
-          window.location.href = `weixin://dl/businessWebview/link/?url=${encodeURIComponent(url)}`
+      shareMethods: {
+        pc: {
+          qrcode: async (data: any) => {
+            try {
+              await this.generateQRCode(data.props.url)
+            } catch (error) {
+              console.error('生成二维码失败:', error)
+            }
+          },
+          copy: async (data: any) => {
+            const copySuccess = this.copyToClipboard(data.props.url)
+            const toast = document.createElement('div')
+            toast.textContent = copySuccess ? '链接已复制到剪贴板' : '复制失败，请手动复制'
+            toast.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.7); color: white; padding: 10px 20px; border-radius: 4px; z-index: 9999;'
+            document.body.appendChild(toast)
+            setTimeout(() => {
+              document.body.removeChild(toast)
+            }, 2000)
 
-          setTimeout(() => {
-            window.location.href = 'https://weixin.qq.com'
-          }, 2000)
-        } else {
-          // PC端生成二维码
-          try {
-            await this.generateQRCode(url)
-          } catch (error) {
-            console.error('生成二维码失败:', error)
+          }
+        },
+        mobile: {
+          copy: async (data: any) => {
+            const copySuccess = this.copyToClipboard(data.props.url)
+            const toast = document.createElement('div')
+            toast.textContent = copySuccess ? '链接已复制到剪贴板' : '复制失败，请手动复制'
+            toast.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.7); color: white; padding: 10px 20px; border-radius: 4px; z-index: 9999;'
+            document.body.appendChild(toast)
+            setTimeout(() => {
+              document.body.removeChild(toast)
+            }, 2000)
           }
         }
       }
@@ -53,34 +71,10 @@ export default class extends Component {
         if (data.meta.isMobile) {
           // 移动端先复制链接到剪贴板，再跳转
           // 使用兼容性更好的方法复制到剪贴板
-          const copyToClipboard = (text: string) => {
-            // 创建临时输入框
-            const textArea = document.createElement('textarea')
-            textArea.value = text
-            textArea.style.position = 'fixed'
-            textArea.style.left = '-9999px'
-            textArea.style.top = '0'
-            document.body.appendChild(textArea)
 
-            // 选择文本并复制
-            textArea.focus()
-            textArea.select()
-
-            let success = false
-            try {
-              success = document.execCommand('copy')
-            } catch (err) {
-              console.error('复制失败:', err)
-            }
-
-            // 移除临时输入框
-            document.body.removeChild(textArea)
-
-            return success
-          }
 
           // 尝试复制
-          const copySuccess = copyToClipboard(url)
+          const copySuccess = this.copyToClipboard(url)
 
           // 显示复制结果提示
           const toast = document.createElement('div')
@@ -95,6 +89,40 @@ export default class extends Component {
           window.location.href = `mqq://`
         } else {
           window.location.href = 'http://connect.qq.com/widget/shareqq/index.html?url=' + encodeURIComponent('https://github.com/yujiangshui/simple-share.js/blob/master/lib/simple-share.js') + '&desc=231&pics=1'
+        }
+      },
+      shareMethods: {
+        pc: {
+          qrcode: async (data: any) => {
+            try {
+              await this.generateQRCode(data.props.url)
+            } catch (error) {
+              console.error('生成二维码失败:', error)
+            }
+          },
+          copy: async (data: any) => {
+            const copySuccess = this.copyToClipboard(data.props.url)
+            const toast = document.createElement('div')
+            toast.textContent = copySuccess ? '链接已复制到剪贴板' : '复制失败，请手动复制'
+            toast.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.7); color: white; padding: 10px 20px; border-radius: 4px; z-index: 9999;'
+            document.body.appendChild(toast)
+            setTimeout(() => {
+              document.body.removeChild(toast)
+            }, 2000)
+
+          }
+        },
+        mobile: {
+          copy: async (data: any) => {
+            const copySuccess = this.copyToClipboard(data.props.url)
+            const toast = document.createElement('div')
+            toast.textContent = copySuccess ? '链接已复制到剪贴板' : '复制失败，请手动复制'
+            toast.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.7); color: white; padding: 10px 20px; border-radius: 4px; z-index: 9999;'
+            document.body.appendChild(toast)
+            setTimeout(() => {
+              document.body.removeChild(toast)
+            }, 2000)
+          }
         }
       }
     },
@@ -118,10 +146,68 @@ export default class extends Component {
           // PC端直接跳转到微博分享页面
           window.location.href = `https://service.weibo.com/share/share.php?url=${encodeURIComponent(url)}&title=${encodeURIComponent(title)}`
         }
+      },
+      shareMethods: {
+        pc: {
+          qrcode: async (data: any) => {
+            try {
+              await this.generateQRCode(data.props.url)
+            } catch (error) {
+              console.error('生成二维码失败:', error)
+            }
+          },
+          copy: async (data: any) => {
+            const copySuccess = this.copyToClipboard(data.props.url)
+            const toast = document.createElement('div')
+            toast.textContent = copySuccess ? '链接已复制到剪贴板' : '复制失败，请手动复制'
+            toast.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.7); color: white; padding: 10px 20px; border-radius: 4px; z-index: 9999;'
+            document.body.appendChild(toast)
+            setTimeout(() => {
+              document.body.removeChild(toast)
+            }, 2000)
+
+          }
+        },
+        mobile: {
+          copy: async (data: any) => {
+            const copySuccess = this.copyToClipboard(data.props.url)
+            const toast = document.createElement('div')
+            toast.textContent = copySuccess ? '链接已复制到剪贴板' : '复制失败，请手动复制'
+            toast.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.7); color: white; padding: 10px 20px; border-radius: 4px; z-index: 9999;'
+            document.body.appendChild(toast)
+            setTimeout(() => {
+              document.body.removeChild(toast)
+            }, 2000)
+          }
+        }
       }
-    }
+    },
   }
 
+  private copyToClipboard = (text: string) => {
+    const textArea = document.createElement('textarea')
+    textArea.value = text
+    textArea.style.position = 'fixed'
+    textArea.style.left = '-9999px'
+    textArea.style.top = '0'
+    document.body.appendChild(textArea)
+
+    // 选择文本并复制
+    textArea.focus()
+    textArea.select()
+
+    let success = false
+    try {
+      success = document.execCommand('copy')
+    } catch (err) {
+      console.error('复制失败:', err)
+    }
+
+    // 移除临时输入框
+    document.body.removeChild(textArea)
+
+    return success
+  }
 
   private toggleMenu = async () => {
     if (this.hasWebShareAPI && this.isMobile) {
@@ -134,8 +220,6 @@ export default class extends Component {
         console.log('Error sharing:', err)
       }
     }
-
-    this.isMenuOpen = !this.isMenuOpen
 
     this.update()
   }
@@ -155,49 +239,83 @@ export default class extends Component {
     // 获取 share-menu 元素
     const shareMenuElement = document.querySelector('share-menu')
     if (shareMenuElement?.shadowRoot) {
-      // 获取 dialog 元素
-      this.shareButtonElement = shareMenuElement.shadowRoot.querySelector('.share-button')
-      console.log(this.shareButtonElement)
-      if (this.shareButtonElement) {
-        // 设置初始状态
-        this.dialogElement = shareMenuElement.shadowRoot.querySelector('dialog')
-        const mediaButtons = this.dialogElement?.querySelectorAll('.media-button')
+      if (!this.isMobile) {
+        this.shareButtonElement = shareMenuElement.shadowRoot.querySelector('.share-button')
+        console.log(this.shareButtonElement)
+        if (this.shareButtonElement) {
+          // 设置初始状态
+          this.dialogElement = shareMenuElement.shadowRoot.querySelector('dialog')
+          this.mediaButtons = Array.from(this.dialogElement?.querySelectorAll('.media-button') || []) as HTMLButtonElement[]
 
-        console.log(this.dialogElement)
-        console.log(mediaButtons)
+          console.log(this.dialogElement)
+          console.log(this.mediaButtons)
 
-        this.shareButtonElement.addEventListener('click', () => {
-          if (!this.isMenuOpen) {
-            this.dialogElement!.style.display = 'flex'
+          this.shareButtonElement.addEventListener('click', () => {
+            if (!this.isMenuOpen) {
+              this.dialogElement!.style.display = 'flex'
 
-            mediaButtons?.forEach((mediaButton, i) => {
-              console.log('click button')
-              mediaButton.classList.toggle('initial-animation');
-              (mediaButton as HTMLElement).style.animationDelay = `${i * 0.1}s`
-            })
-          } else {
-            this.dialogElement!.style.display = 'none'
+              this.mediaButtons?.forEach((mediaButton, i) => {
+                console.log('click button')
+                mediaButton.classList.add('initial-animation');
+                (mediaButton as HTMLElement).style.animationDelay = `${i * 0.05}s`
+              })
+            } else {
+              this.dialogElement!.style.display = 'none'
 
-            mediaButtons?.forEach((mediaButton) => {
-              (mediaButton as HTMLElement).style.opacity = '0'
-            })
-          }
-        })
+              this.mediaButtons?.forEach((mediaButton) => {
+                (mediaButton as HTMLElement).style.opacity = '0'
+                mediaButton.classList.remove('initial-animation');
+              })
+            }
 
-
-        mediaButtons?.forEach((mediaButton, i) => {
-          mediaButton.addEventListener('animationend', () => {
-            (mediaButton as HTMLElement).style.opacity = '1'
-            mediaButton.classList.toggle('initial-animation');
-            (mediaButton as HTMLElement).style.animationDelay = `0s`
+            this.isMenuOpen = !this.isMenuOpen
+            console.log('isMenuOpen', this.isMenuOpen)
           })
-        })
 
 
+          this.mediaButtons?.forEach((mediaButton, i) => {
+            mediaButton.addEventListener('animationend', () => {
+              console.log('animationend');
+              (mediaButton as HTMLElement).style.opacity = '1'
+              mediaButton.classList.remove('initial-animation');
+              (mediaButton as HTMLElement).style.animationDelay = `0s`
+            })
+            mediaButton.addEventListener('click', () => {
+              if (!this.currentToggledButton) {
+                console.log('intial state')
+                this.currentToggledButton = mediaButton
+              } else if (this.currentToggledButton != mediaButton) {
+                this.currentToggledButton?.classList.toggle('plus--active')
+                this.currentToggledButton = mediaButton
+              } else {
+                this.currentToggledButton = null
+              }
+              mediaButton.classList.toggle('plus--active')
+            })
+
+
+          })
+        }
+      } else {
+        this.shareButtonElement = shareMenuElement.shadowRoot.querySelector('.share-button')
+        console.log(this.shareButtonElement)
+        if (this.shareButtonElement) {
+
+          const menuOverlay = shareMenuElement.shadowRoot.querySelector('.menu-overlay')
+          const bottomMenu = shareMenuElement.shadowRoot.querySelector('.bottom-menu')
+          this.shareButtonElement.addEventListener('click', () => {
+            console.log('click')
+            menuOverlay?.classList.add('active')
+            bottomMenu?.classList.add('active')
+          })
+          menuOverlay?.addEventListener('click', () => {
+            menuOverlay?.classList.remove('active')
+            bottomMenu?.classList.remove('active')
+          })
+        }
       }
     }
   }
-
 
   private generateQRCode = async (url: string) => {
     try {
@@ -252,20 +370,39 @@ export default class extends Component {
           </button>
 
 
-          <dialog open class="share-menu">
-
-            {Object.entries(this.shareOptions).map(([key, option]) => (
-              <button key={key} onClick={() => option.handleShare({
-                props,
-                meta: {
-                  isMobile: this.isMobile,
-                  hasWebShareAPI: this.hasWebShareAPI
-                }
-              })} class="media-button">
-              </button>
-            ))}
-
-          </dialog>
+          {
+            !this.isMobile ?
+              <dialog open class="share-menu">
+                {Object.entries(this.shareOptions).map(([key, option]) => (
+                  <button key={key} onClick={() => { }} class="media-button">
+                    <div class="plus__line plus__line--v">
+                      {Object.entries(option.shareMethods.pc).map(([key, method]) => (
+                        <a href="#" class="plus__link" onClick={() => method({
+                          props: props,
+                          meta: {
+                            isMobile: this.isMobile,
+                            hasWebShareAPI: this.hasWebShareAPI,
+                          }
+                        })
+                        }>{key}</a>
+                      ))}
+                    </div>
+                    <div class="plus__line plus__line--h"></div>
+                  </button>
+                ))}
+              </dialog> :
+              <>
+                <div class="menu-overlay"></div>
+                <div>test</div>
+                <div class="bottom-menu">
+                  <button class="menu-item">首页</button>
+                  <button class="menu-item">搜索</button>
+                  <button class="menu-item">消息</button>
+                  <button class="menu-item">设置</button>
+                  <button class="menu-item">关于</button>
+                </div>
+              </>
+          }
 
         </div>
 
