@@ -1,5 +1,5 @@
 import { render, h } from 'omi'
-import './shareMenu.tsx'
+import './shareButton.tsx'
 
 
-render(<share-menu />, document.getElementById('app')!)
+render(<share-button />, document.getElementById('app')!)
