@@ -4,6 +4,7 @@ import { generateQRCode } from './util/qrcode'
 import { replaceSvgFill, icons } from './util/svg'
 
 
+
 @tag('share-button')
 export default class extends Component {
 
@@ -18,6 +19,9 @@ export default class extends Component {
   private shareButtonInnerElement: HTMLButtonElement | null = null
   private mediaButtons: HTMLLIElement[] = []
   private menuContainer: HTMLDivElement | null = null
+
+
+  private webShareApiButtonCallback: (e: any) => void  = (e:any) => {};
 
   static propTypes = {
     name: String,
@@ -288,7 +292,36 @@ export default class extends Component {
 
           const menuOverlay = shareButtonElement.shadowRoot.querySelector('.menu-overlay')
           const bottomMenu = shareButtonElement.shadowRoot.querySelector('.bottom-menu')
+          // const webShareApiButton = shareButtonElement.shadowRoot.querySelector('.web-share-api-button')
           this.menuContainer = shareButtonElement.shadowRoot.querySelector('.menu-container')
+
+
+          this.webShareApiButtonCallback = async (props:any) => {
+            console.log('click')
+            if (this.hasWebShareAPI) {
+              this.isMenuOpen = !this.isMenuOpen
+              menuOverlay?.classList.remove('active')
+              bottomMenu?.classList.remove('active')
+
+              const shareData = {
+                title: '分享一个链接',
+                text: '分享一个链接',
+                url: props.url
+              }
+              await navigator.share(shareData)
+            }else{
+              console.log('not support')
+
+              //toast not support
+              const toast = document.createElement('div')
+              toast.textContent = 'not support'
+              toast.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.7); color: white; padding: 10px 20px; border-radius: 4px; z-index: 999999;'
+              document.body.appendChild(toast)
+              setTimeout(() => {
+                document.body.removeChild(toast)
+              }, 2000)
+            }
+          }
 
           this.shareButtonInnerElement.addEventListener('click', () => {
             console.log('click')
@@ -422,21 +455,63 @@ export default class extends Component {
 
   private shareMethodDialogMobile = (methods: any, data: any) => {
     const dialog = document.createElement('dialog')
-    dialog.style.cssText = 'padding: 20px; border-radius: 8px; border: none;'
+    dialog.style.cssText = `
+      padding: 20px;
+      border-radius: 8px;
+      border: none;
+      width: 80%;
+      max-width: 300px;
+      background: white;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    `
+
+    const buttonContainer = document.createElement('div')
+    buttonContainer.style.cssText = `
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+    `
 
     //loop
     Object.entries(methods).forEach(([key, method]: [string, any]) => {
       const button = document.createElement('button')
       button.textContent = key
-      button.onclick = () => method(data)
-      dialog.appendChild(button)
+      button.style.cssText = `
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        background: #f5f5f5;
+        color: #333;
+        font-size: 14px;
+        cursor: pointer;
+        width: 100%;
+        text-align: center;
+      `
+      button.onclick = () => {
+        method(data)
+        dialog.close()
+      }
+      buttonContainer.appendChild(button)
     })
 
     const closeButton = document.createElement('button')
-    closeButton.textContent = '关闭'
-    closeButton.style.cssText = 'margin-top: 10px; padding: 5px 10px;'
+    closeButton.textContent = '取消'
+    closeButton.style.cssText = `
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      background: #f5f5f5;
+      color: #666;
+      font-size: 14px;
+      cursor: pointer;
+      width: 100%;
+      text-align: center;
+      margin-top: 10px;
+    `
     closeButton.onclick = () => dialog.close()
 
+    dialog.appendChild(buttonContainer)
     dialog.appendChild(closeButton)
     document.body.appendChild(dialog)
     dialog.showModal()
@@ -474,6 +549,15 @@ export default class extends Component {
               <>
                 <div class="menu-overlay"></div>
                 <div class="bottom-menu">
+                  <div class="menu-header">
+                    <div class="header-content-intro">
+                      分享页面
+                    </div>
+                    <div class="header-content-href">
+                      {props.url}
+                    </div>
+                  </div>
+                  <div class="divider"></div>
                   <div class="menu-container">
                     {Array.from({ length: this.totalPages }).map((_, pageIndex) => (
                       <div class="menu-page">
@@ -502,8 +586,21 @@ export default class extends Component {
                       ></div>
                     ))}
                   </div>
-                  <div class="copy-board">
-                    copy your link here
+
+                  <div class="divider"></div>
+                  <div class="other-function-board">
+                    <button class="function-button" >
+                      <div style="display: flex; align-items: center; justify-content: center;gap:15px">
+                        <div style="width: 24px; height: 24px;" innerHTML={icons.copyMobile}></div>
+                        <div>复制链接</div>
+                      </div>
+                    </button>
+                    <button class="function-button web-share-api-button" onclick={() => this.webShareApiButtonCallback(props)} >
+                      <div style="display: flex; align-items: center; justify-content: center;gap:15px">
+                        <div style="width: 24px; height: 24px;" innerHTML={icons.webShareApi}></div>
+                        <div>web share api</div>
+                      </div>
+                    </button>
                   </div>
                 </div>
               </>
