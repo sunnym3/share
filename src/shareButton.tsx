@@ -378,6 +378,9 @@ export default class extends Component {
       qrCode.src = qrCodeUrl
       qrCode.classList.add('qr-code')
 
+      const mixLayer = document.createElement('div')
+      mixLayer.classList.add('mix-layer')
+
       const closeButton = document.createElement('button')
       closeButton.innerHTML = `
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -403,6 +406,7 @@ export default class extends Component {
       })
 
       qrCodeContainer.appendChild(qrCode)
+      qrCodeContainer.appendChild(mixLayer)
       qrCodeContainer.appendChild(closeButton)
       dialog.appendChild(qrCodeContainer)
       this.dialogElement?.appendChild(dialog)

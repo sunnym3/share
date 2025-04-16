@@ -366,17 +366,12 @@
 
 
 
-.qr-code {
-  width: 100%;
-  height: 100%;
-  transition: filter 0.3s ease;
-}
 
 .qr-code-container {
   position: relative;
   width: 200px;
   height: 200px;
-  --border-width: 5px;
+  --border-width: 10px;
 
   transform: scale(0);
   transition: transform 0.3s ease-out;
@@ -395,12 +390,40 @@
   background-position: 0 50%;
   /* border-radius: 10px; */
   animation: moveGradient 4s alternate infinite;
+
+  /* mix-blend-mode: lighten; */
 }
 
 @keyframes moveGradient {
   50% {
     background-position: 100% 50%;
   }
+}
+
+
+
+.qr-code {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transition: filter 0.3s ease;
+
+  mix-blend-mode: lighten;
+}
+.mix-layer{
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+
+  background: linear-gradient(60deg, #5f86f2, #a65ff2, var(--share-menu-item-pc-gradient-start), var(--share-menu-item-pc-gradient-end));
+  background-size: 300% 300%;
+  animation: moveGradient 4s alternate infinite;
+
+  mix-blend-mode: lighten;
 }
 
 .qr-code-close-button {
