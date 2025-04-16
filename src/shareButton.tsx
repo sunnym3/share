@@ -1,7 +1,7 @@
-import { h, tag, Component, o } from 'omi'
+import { h, tag, Component} from 'omi'
 import cssString from './shareButton.css?raw'
 import { generateQRCode } from './util/qrcode'
-import { replaceSvgFill, icons } from './util/svg'
+import {  icons } from './util/svg'
 
 
 
@@ -21,7 +21,7 @@ export default class extends Component {
   private menuContainer: HTMLDivElement | null = null
 
 
-  private webShareApiButtonCallback: (e: any) => void  = (e:any) => {};
+  private webShareApiButtonCallback: (e: any) => void  = (e:any) => {e};
 
   static propTypes = {
     name: String,
@@ -356,33 +356,61 @@ export default class extends Component {
   }
 
   private generateQRCode = async (url: string) => {
+    console.log(cssString)
     try {
       const qrCodeUrl = await generateQRCode(url, {
         width: 200,
         height: 200,
         color: {
           dark: '#000000',
-          light: '#ffffff'
         }
       })
 
       // 创建二维码弹窗
       const dialog = document.createElement('dialog')
-      dialog.style.cssText = 'padding: 20px; border-radius: 8px; border: none;'
+      dialog.style.cssText = 'border-radius: 8px; border:none; position: relative;background: transparent;'
 
-      const img = document.createElement('img')
-      img.src = qrCodeUrl
-      img.style.cssText = 'width: 200px; height: 200px;'
+      const qrCodeContainer = document.createElement('div')
+      qrCodeContainer.classList.add('qr-code-container')
+      
+
+      const qrCode = document.createElement('img')
+      qrCode.src = qrCodeUrl
+      qrCode.classList.add('qr-code')
 
       const closeButton = document.createElement('button')
-      closeButton.textContent = '关闭'
-      closeButton.style.cssText = 'margin-top: 10px; padding: 5px 10px;'
-      closeButton.onclick = () => dialog.close()
+      closeButton.innerHTML = `
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18 6L6 18M6 6L18 18" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      `
+      closeButton.classList.add('qr-code-close-button')
+      closeButton.onclick = () => {
+        qrCodeContainer.style.transform = 'scale(0)'
+        setTimeout(() => {
+          dialog.close()
+        }, 300)
+      }
 
-      dialog.appendChild(img)
-      dialog.appendChild(closeButton)
-      document.body.appendChild(dialog)
+      qrCodeContainer.addEventListener('mouseenter', () => {
+        closeButton.style.opacity = '1'
+        qrCode.style.filter = 'brightness(0.7)'
+      })
+
+      qrCodeContainer.addEventListener('mouseleave', () => {
+        closeButton.style.opacity = '0'
+        qrCode.style.filter = 'brightness(1)'
+      })
+
+      qrCodeContainer.appendChild(qrCode)
+      qrCodeContainer.appendChild(closeButton)
+      dialog.appendChild(qrCodeContainer)
+      this.dialogElement?.appendChild(dialog)
+      
       dialog.showModal()
+      // 触发重排以启动动画
+      qrCodeContainer.offsetHeight
+      qrCodeContainer.style.transform = 'scale(1)'
     } catch (error) {
       throw error
     }
@@ -455,13 +483,14 @@ export default class extends Component {
 
   private shareMethodDialogMobile = (methods: any, data: any) => {
     const dialog = document.createElement('dialog')
+    
     dialog.style.cssText = `
       padding: 20px;
       border-radius: 8px;
       border: none;
       width: 80%;
       max-width: 300px;
-      background: white;
+      background: var(--share-menu-mobile-dialog-background-color);
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     `
 
@@ -501,7 +530,7 @@ export default class extends Component {
       padding: 12px;
       border: none;
       border-radius: 8px;
-      background: #f5f5f5;
+      background: white;
       color: #666;
       font-size: 14px;
       cursor: pointer;
@@ -513,7 +542,9 @@ export default class extends Component {
 
     dialog.appendChild(buttonContainer)
     dialog.appendChild(closeButton)
-    document.body.appendChild(dialog)
+
+    // document.body.appendChild(dialog)
+    this.shareButtonInnerElement?.appendChild(dialog)
     dialog.showModal()
   }
   render(props: any) {
