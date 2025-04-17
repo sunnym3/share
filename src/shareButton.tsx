@@ -45,12 +45,14 @@ export default class extends Component {
             console.error('生成二维码失败:', error)
           }
         },
-        mobile: {
-          copy: async (data: any) => {
-            this.copyToClipboard(data.props.url)
-
+        mobile: [
+          {
+            name: '复制链接',
+            method: async (data: any) => {
+              this.copyToClipboard(data.props.url)
+            }
           }
-        }
+        ]
       }
     },
     {
@@ -63,13 +65,15 @@ export default class extends Component {
         pc: async (data: any) => {
           window.location.href = `http://connect.qq.com/widget/shareqq/index.html?url=${encodeURIComponent(data.props.url)}&sharesource=qzone&title=test&pics=&summary=&desc=test`
         },
-        mobile: {
-          copyRedirect: async (data: any) => {
-            // url scheme跳转
-            this.copyToClipboard(data.props.url)
-            window.location.href = `mqq://`
+        mobile: [
+          {
+            name: '复制并跳转',
+            method: async (data: any) => {
+              this.copyToClipboard(data.props.url)
+              window.location.href = `mqq://`
+            }
           }
-        }
+        ]
       }
     },
     {
@@ -83,35 +87,35 @@ export default class extends Component {
           console.log(data)
           const url = 'https://www.baidu.com/index.php?tn=75144485_1_dg&ch=9'
           const title = '分享一个链接'
-          // 直接跳转到微博分享页面
           window.location.href = `https://service.weibo.com/share/share.php?url=${encodeURIComponent(url)}&title=${encodeURIComponent(title)}`
-
         },
-        mobile: {
-          copy: (data: any) => {
-            this.copyToClipboard(data.props.url)
-
+        mobile: [
+          {
+            name: '复制链接',
+            method: (data: any) => {
+              this.copyToClipboard(data.props.url)
+            }
           },
-          redirect: (data: any) => {
-            console.log(data)
-            const url = 'https://www.baidu.com/index.php?tn=75144485_1_dg&ch=9'
-            const title = '分享一个链接'
-            // 移动端使用微博URL Scheme
-            window.location.href = `sinaweibo://sendweibo?show_keyboard=1&content=${encodeURIComponent(title + ' ' + url)}`
-            // 如果微博未安装，3秒后跳转到微博网页版
-            // setTimeout(() => {
-            //   window.location.href = `https://service.weibo.com/share/share.php?url=${encodeURIComponent(url)}&title=${encodeURIComponent(title)}`
-            // }, 3000)
-
+          {
+            name: '跳转分享',
+            method: (data: any) => {
+              console.log(data)
+              const url = 'https://www.baidu.com/index.php?tn=75144485_1_dg&ch=9'
+              const title = '分享一个链接'
+              window.location.href = `sinaweibo://sendweibo?show_keyboard=1&content=${encodeURIComponent(title + ' ' + url)}`
+            }
           },
-          api: (data: any) => {
-            console.log(data)
-            const url = 'https://www.baidu.com/index.php?tn=75144485_1_dg&ch=9'
-            const title = '分享一个链接'
-            window.location.href = `https://service.weibo.com/share/share.php?url=${encodeURIComponent(url)}&title=${encodeURIComponent(title)}`
+          {
+            name: '网页分享',
+            method: (data: any) => {
+              console.log(data)
+              const url = 'https://www.baidu.com/index.php?tn=75144485_1_dg&ch=9'
+              const title = '分享一个链接'
+              window.location.href = `https://service.weibo.com/share/share.php?url=${encodeURIComponent(url)}&title=${encodeURIComponent(title)}`
+            }
           }
-        }
-      },
+        ]
+      }
     },
     {
       name: 'facebook',
@@ -132,12 +136,14 @@ export default class extends Component {
           let metaParams = metaArr.toString()
           window.open('http://www.facebook.com/sharer.php?u=' + encodeURIComponent(`http://java.chendahai.cn/share/new?meta=${metaParams}`))
         },
-        mobile: {
-          copy: async (data: any) => {
-            this.copyToClipboard(data.props.url)
-
+        mobile: [
+          {
+            name: '复制链接',
+            method: async (data: any) => {
+              this.copyToClipboard(data.props.url)
+            }
           }
-        }
+        ]
       }
     },
     {
@@ -151,13 +157,16 @@ export default class extends Component {
           console.log(data)
           window.open(`https://twitter.com/intent/tweet?text=` + encodeURIComponent(`https://www.baidu.com`))
         },
-        mobile: {
-          copy: (data: any) => {
-            this.copyToClipboard(data.props.url)
+        mobile: [
+          {
+            name: '复制链接',
+            method: (data: any) => {
+              this.copyToClipboard(data.props.url)
+            }
           }
-        }
+        ]
       }
-    },
+    }
   ]
 
   private currentPage = 0
@@ -399,7 +408,6 @@ export default class extends Component {
         closeButton.style.opacity = '1'
         qrCode.style.filter = 'brightness(0.7)'
       })
-
       qrCodeContainer.addEventListener('mouseleave', () => {
         closeButton.style.opacity = '0'
         qrCode.style.filter = 'brightness(1)'
@@ -486,66 +494,47 @@ export default class extends Component {
 
 
   private shareMethodDialogMobile = (methods: any, data: any) => {
+
     const dialog = document.createElement('dialog')
+    dialog.classList.add('share-method-mobile-dialog')
     
-    dialog.style.cssText = `
-      padding: 20px;
-      border-radius: 8px;
-      border: none;
-      width: 80%;
-      max-width: 300px;
-      background: var(--share-menu-mobile-dialog-background-color);
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    `
+
+    const dialogHeader = document.createElement('div')
+    dialogHeader.classList.add('share-method-mobile-dialog-header')
+    
+
+    const headerContent = document.createElement('div')
+    headerContent.classList.add('share-method-mobile-dialog-header-content')
+    headerContent.textContent = '选择分享方式'
+
+
+    const closeButton = document.createElement('button')
+    closeButton.textContent = 'x'
+    closeButton.classList.add('share-method-mobile-dialog-header-close-button')
+    closeButton.onclick = () => dialog.close()
+
+    dialogHeader.appendChild(headerContent)
+    dialogHeader.appendChild(closeButton)
+
 
     const buttonContainer = document.createElement('div')
-    buttonContainer.style.cssText = `
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      width: 100%;
-    `
-
-    //loop
+    buttonContainer.classList.add('share-method-mobile-dialog-button-container')
+     
     Object.entries(methods).forEach(([key, method]: [string, any]) => {
       const button = document.createElement('button')
-      button.textContent = key
-      button.style.cssText = `
-        padding: 12px;
-        border: none;
-        border-radius: 8px;
-        background: #f5f5f5;
-        color: #333;
-        font-size: 14px;
-        cursor: pointer;
-        width: 100%;
-        text-align: center;
-      `
+      button.textContent = method.name
+      button.classList.add('share-method-mobile-dialog-button')
       button.onclick = () => {
-        method(data)
+        method.method(data)
         dialog.close()
       }
       buttonContainer.appendChild(button)
     })
 
-    const closeButton = document.createElement('button')
-    closeButton.textContent = '取消'
-    closeButton.style.cssText = `
-      padding: 12px;
-      border: none;
-      border-radius: 8px;
-      background: white;
-      color: #666;
-      font-size: 14px;
-      cursor: pointer;
-      width: 100%;
-      text-align: center;
-      margin-top: 10px;
-    `
-    closeButton.onclick = () => dialog.close()
-
+   
+    dialog.appendChild(dialogHeader)
     dialog.appendChild(buttonContainer)
-    dialog.appendChild(closeButton)
+  
 
     // document.body.appendChild(dialog)
     this.shareButtonInnerElement?.appendChild(dialog)
