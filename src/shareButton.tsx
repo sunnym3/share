@@ -1,9 +1,26 @@
-import { h, tag, Component} from 'omi'
+import { h, tag, Component } from 'omi'
 import cssString from './shareButton.css?raw'
 import { generateQRCode } from './util/qrcode'
-import {  icons } from './util/svg'
+import { icons } from './util/svg'
+import { captureElement, downloadScreenshot } from './util/screenshot'
+import { access} from './util/api'
+// 小红书ui
+// 流量统计
 
-
+type shareOption = {
+  name: string,
+  icon: {
+    mobile: string,
+    pc: string
+  },
+  shareMethods: {
+    pc: (data: any) => void,
+    mobile: {
+      name: string,
+      method: (data: any) => void
+    }[]
+  }
+}
 
 @tag('share-button')
 export default class extends Component {
@@ -21,16 +38,28 @@ export default class extends Component {
   private menuContainer: HTMLDivElement | null = null
 
 
-  private webShareApiButtonCallback: (e: any) => void  = (e:any) => {e};
+  private currentPage = 0
+  private totalPages = 0
+
+
+  private webShareApiButtonCallback: (e: any) => void = (e: any) => { e };
 
   static propTypes = {
     name: String,
-    url: String
+    url: String,
+    media: String,
+    other: String,
   }
 
 
   // 定义菜单项数据
-  private shareOptions = [
+  private userShareOptions: shareOption[] = []
+  public addUserShareOptions(options: shareOption[]) {
+    this.userShareOptions = options
+    console.log('options')
+  }
+  private shareOptions: shareOption[] = []
+  private shareOptionsDefault: shareOption[] = [
     {
       name: '微信',
       icon: {
@@ -44,6 +73,18 @@ export default class extends Component {
           } catch (error) {
             console.error('生成二维码失败:', error)
           }
+          // try {
+          //   const element = document.querySelector('.screenshot') as HTMLElement;
+          //   if (element) {
+          //     const base64Image = await captureElement(element, {
+          //       scale: 2,
+          //       backgroundColor: '#ffffff'
+          //     });
+          //     downloadScreenshot(base64Image, 'page-screenshot.png');
+          //   }
+          // } catch (error) {
+          //   console.error('截图失败:', error);
+          // }
         },
         mobile: [
           {
@@ -169,8 +210,6 @@ export default class extends Component {
     }
   ]
 
-  private currentPage = 0
-  private totalPages = Math.ceil(this.shareOptions.length / 4)
 
 
   private copyToClipboard = (text: string) => {
@@ -305,7 +344,7 @@ export default class extends Component {
           this.menuContainer = shareButtonElement.shadowRoot.querySelector('.menu-container')
 
 
-          this.webShareApiButtonCallback = async (props:any) => {
+          this.webShareApiButtonCallback = async (props: any) => {
             console.log('click')
             if (this.hasWebShareAPI) {
               this.isMenuOpen = !this.isMenuOpen
@@ -318,7 +357,7 @@ export default class extends Component {
                 url: props.url
               }
               await navigator.share(shareData)
-            }else{
+            } else {
               console.log('not support')
 
               //toast not support
@@ -381,7 +420,7 @@ export default class extends Component {
 
       const qrCodeContainer = document.createElement('div')
       qrCodeContainer.classList.add('qr-code-container')
-      
+
 
       const qrCode = document.createElement('img')
       qrCode.src = qrCodeUrl
@@ -413,12 +452,12 @@ export default class extends Component {
         qrCode.style.filter = 'brightness(1)'
       })
 
-      qrCodeContainer.appendChild(qrCode)
       qrCodeContainer.appendChild(mixLayer)
+      qrCodeContainer.appendChild(qrCode)
       qrCodeContainer.appendChild(closeButton)
       dialog.appendChild(qrCodeContainer)
       this.dialogElement?.appendChild(dialog)
-      
+
       dialog.showModal()
       // 触发重排以启动动画
       qrCodeContainer.offsetHeight
@@ -497,11 +536,11 @@ export default class extends Component {
 
     const dialog = document.createElement('dialog')
     dialog.classList.add('share-method-mobile-dialog')
-    
+
 
     const dialogHeader = document.createElement('div')
     dialogHeader.classList.add('share-method-mobile-dialog-header')
-    
+
 
     const headerContent = document.createElement('div')
     headerContent.classList.add('share-method-mobile-dialog-header-content')
@@ -519,8 +558,8 @@ export default class extends Component {
 
     const buttonContainer = document.createElement('div')
     buttonContainer.classList.add('share-method-mobile-dialog-button-container')
-     
-    Object.entries(methods).forEach(([key, method]: [string, any]) => {
+
+    Object.entries(methods).forEach(([_, method]: [string, any]) => {
       const button = document.createElement('button')
       button.textContent = method.name
       button.classList.add('share-method-mobile-dialog-button')
@@ -531,16 +570,48 @@ export default class extends Component {
       buttonContainer.appendChild(button)
     })
 
-   
+
     dialog.appendChild(dialogHeader)
     dialog.appendChild(buttonContainer)
-  
+
 
     // document.body.appendChild(dialog)
     this.shareButtonInnerElement?.appendChild(dialog)
     dialog.showModal()
   }
+
+
   render(props: any) {
+    const media = JSON.parse(props.media)
+    let otherOption = null
+    if (props.other) {
+      try {
+        const parsedOther = JSON.parse(props.other)
+        console.log('Parsed other:', parsedOther)
+        if (parsedOther && typeof parsedOther === 'object') {
+          const processedOption = { ...parsedOther }
+          if (parsedOther.shareMethods) {
+            if (parsedOther.shareMethods.pc) {
+              processedOption.shareMethods.pc = new Function('return ' + parsedOther.shareMethods.pc)()
+            }
+            if (parsedOther.shareMethods.mobile) {
+              processedOption.shareMethods.mobile = parsedOther.shareMethods.mobile.map((method: any) => ({
+                ...method,
+                method: new Function('return ' + method.method)()
+              }))
+            }
+          }
+          otherOption = processedOption
+        }
+      } catch (error) {
+        console.error('Error parsing other option:', error)
+        console.error('Raw other prop:', props.other)
+      }
+    }
+    this.shareOptions = this.shareOptionsDefault
+      .filter((option) => media.includes(option.name))
+      .concat(otherOption ? [otherOption] : [])
+    this.totalPages = Math.ceil(this.shareOptions.length / 4)
 
     return (
       <>
@@ -551,19 +622,25 @@ export default class extends Component {
             </svg>
             Share
           </button>
-
-
           {
             !this.isMobile ?
               <dialog open class="share-menu">
                 {Object.entries(this.shareOptions).map(([key, option]) => (
-                  <li key={key} onClick={() => option.shareMethods.pc({
-                    props: props,
-                    meta: {
-                      isMobile: this.isMobile,
-                      hasWebShareAPI: this.hasWebShareAPI,
-                    }
-                  })} >
+                  <li key={key} onClick={() => {
+                    option.shareMethods.pc({
+                      props: props,
+                      meta: {
+                        isMobile: this.isMobile,
+                        hasWebShareAPI: this.hasWebShareAPI,
+                      }
+                    })
+                    access({
+                      mediaName: option.name,
+                      url: props.url,
+                      accessTime: "2025-04-25 12:00:00",
+                      accessLocation: "127.0.0.1",
+                    })
+                  }} >
                     <a href="#" >
                       <i innerHTML={option.icon.pc}></i>
                     </a>
@@ -586,13 +663,23 @@ export default class extends Component {
                     {Array.from({ length: this.totalPages }).map((_, pageIndex) => (
                       <div class="menu-page">
                         {this.shareOptions.slice(pageIndex * 4, (pageIndex + 1) * 4).map((item, index) => (
-                          <button key={index} class="menu-item" onClick={() => this.shareMethodDialogMobile(item.shareMethods.mobile, {
-                            props: props,
-                            meta: {
-                              isMobile: this.isMobile,
-                              hasWebShareAPI: this.hasWebShareAPI,
-                            }
-                          })}>
+                          <button key={index} class="menu-item" onClick={() => {
+                            this.shareMethodDialogMobile(item.shareMethods.mobile, {
+                              props: props,
+                              meta: {
+                                isMobile: this.isMobile,
+                                hasWebShareAPI: this.hasWebShareAPI,
+                              }
+                            })
+                            access({
+                              mediaName: item.name,
+                              url: props.url,
+                              accessTime: "2025-04-25 12:00:00",
+                              accessLocation: "127.0.0.1",
+                            })
+                          }
+
+                          }>
                             <div style="display: flex; align-items: center; justify-content: center;gap:15px">
                               <div style="width: 24px; height: 24px;" innerHTML={item.icon.mobile}></div>
                               <div>{item.name}</div>
@@ -623,6 +710,29 @@ export default class extends Component {
                       <div style="display: flex; align-items: center; justify-content: center;gap:15px">
                         <div style="width: 24px; height: 24px;" innerHTML={icons.webShareApi}></div>
                         <div>web share api</div>
+                      </div>
+                    </button>
+                    <button class="function-button" onclick={async () => {
+                      try {
+                        const element = document.querySelector('.screenshot') as HTMLElement;
+                        if (element) {
+                          const base64Image = await captureElement(element, {
+                            scale: 2,
+                            backgroundColor: '#ffffff'
+                          });
+                          downloadScreenshot(base64Image, 'page-screenshot.png');
+                        }
+                      } catch (error) {
+                        console.error('截图失败:', error);
+                      }
+                    }}>
+                      <div style="display: flex; align-items: center; justify-content: center;gap:15px">
+                        <div style="width: 24px; height: 24px;">
+                          <svg viewBox="0 0 24 24" width="24" height="24">
+                            <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
+                          </svg>
+                        </div>
+                        <div>截取页面</div>
                       </div>
                     </button>
                   </div>

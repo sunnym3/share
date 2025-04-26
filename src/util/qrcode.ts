@@ -27,6 +27,8 @@ export const generateQRCode = async (
       dark: '#000000',
       light: '#ffffff'
     },
+    // margin: 2,
+    // scale: 1,
     errorCorrectionLevel: 'H' as const
   }
 

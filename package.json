@@ -10,8 +10,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@halo-dev/api-client": "^2.20.0",
     "@types/html2canvas": "^0.5.35",
     "@types/qrcode": "^1.5.5",
+    "axios": "^1.9.0",
     "html2canvas": "^1.4.1",
     "omi": "latest",
     "qrcode": "^1.5.4"
