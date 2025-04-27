@@ -3,7 +3,7 @@ import cssString from './shareButton.css?raw'
 import { generateQRCode } from './util/qrcode'
 import { icons } from './util/svg'
 import { captureElement, downloadScreenshot } from './util/screenshot'
-import { access} from './util/api'
+import { access } from './util/api'
 // 小红书ui
 // 流量统计
 
@@ -153,6 +153,27 @@ export default class extends Component {
               const url = 'https://www.baidu.com/index.php?tn=75144485_1_dg&ch=9'
               const title = '分享一个链接'
               window.location.href = `https://service.weibo.com/share/share.php?url=${encodeURIComponent(url)}&title=${encodeURIComponent(title)}`
+            }
+          }
+        ]
+      }
+    },
+    {
+      name: 'QQ',
+      icon: {
+        mobile: icons.qqMobile,
+        pc: icons.qqPc
+      },
+      shareMethods: {
+        pc: async (data: any) => {
+          window.location.href = `http://connect.qq.com/widget/shareqq/index.html?url=${encodeURIComponent(data.props.url)}&sharesource=qzone&title=test&pics=&summary=&desc=test`
+        },
+        mobile: [
+          {
+            name: '复制并跳转',
+            method: async (data: any) => {
+              this.copyToClipboard(data.props.url)
+              window.location.href = `mqq://`
             }
           }
         ]
@@ -582,7 +603,7 @@ export default class extends Component {
 
 
   render(props: any) {
-    const media = JSON.parse(props.media)
+    const media = props.media ? JSON.parse(props.media) : null
     let otherOption = null
     if (props.other) {
       try {
@@ -608,10 +629,11 @@ export default class extends Component {
         console.error('Raw other prop:', props.other)
       }
     }
-    this.shareOptions = this.shareOptionsDefault
-      .filter((option) => media.includes(option.name))
-      .concat(otherOption ? [otherOption] : [])
-    this.totalPages = Math.ceil(this.shareOptions.length / 4)
+    this.shareOptions = media
+      ? this.shareOptionsDefault.filter((option) => media.includes(option.name))
+      : this.shareOptionsDefault
+    this.shareOptions = this.shareOptions.concat(otherOption ? [otherOption] : [])
+    this.totalPages = Math.ceil(this.shareOptions.length / 5)
 
     return (
       <>
@@ -662,7 +684,7 @@ export default class extends Component {
                   <div class="menu-container">
                     {Array.from({ length: this.totalPages }).map((_, pageIndex) => (
                       <div class="menu-page">
-                        {this.shareOptions.slice(pageIndex * 4, (pageIndex + 1) * 4).map((item, index) => (
+                        {this.shareOptions.slice(pageIndex * 5, (pageIndex + 1) * 5).map((item, index) => (
                           <button key={index} class="menu-item" onClick={() => {
                             this.shareMethodDialogMobile(item.shareMethods.mobile, {
                               props: props,
@@ -680,9 +702,11 @@ export default class extends Component {
                           }
 
                           }>
-                            <div style="display: flex; align-items: center; justify-content: center;gap:15px">
-                              <div style="width: 24px; height: 24px;" innerHTML={item.icon.mobile}></div>
-                              <div>{item.name}</div>
+                            <div class="menu-item-wrapper">
+                              <div class="menu-item-icon">
+                                <div style="width: 30px; height: 30px;" innerHTML={item.icon.mobile}></div>
+                              </div>
+                              <div class="menu-item-name">{item.name}</div>
                             </div>
                           </button>
                         ))}
@@ -701,15 +725,19 @@ export default class extends Component {
                   <div class="divider"></div>
                   <div class="other-function-board">
                     <button class="function-button" >
-                      <div style="display: flex; align-items: center; justify-content: center;gap:15px">
-                        <div style="width: 24px; height: 24px;" innerHTML={icons.copyMobile}></div>
-                        <div>复制链接</div>
+                      <div class="menu-item-wrapper">
+                        <div class="menu-item-icon">
+                          <div style="width: 30px; height: 30px;" innerHTML={icons.copyMobile}></div>
+                        </div>
+                        <div class="menu-item-name">复制链接</div>
                       </div>
                     </button>
                     <button class="function-button web-share-api-button" onclick={() => this.webShareApiButtonCallback(props)} >
-                      <div style="display: flex; align-items: center; justify-content: center;gap:15px">
-                        <div style="width: 24px; height: 24px;" innerHTML={icons.webShareApi}></div>
-                        <div>web share api</div>
+                      <div class="menu-item-wrapper" >
+                        <div class="menu-item-icon">
+                          <div style="width: 30px; height: 30px;" innerHTML={icons.webShareApi}></div>
+                        </div>
+                        <div class="menu-item-name">web share</div>
                       </div>
                     </button>
                     <button class="function-button" onclick={async () => {
@@ -726,13 +754,15 @@ export default class extends Component {
                         console.error('截图失败:', error);
                       }
                     }}>
-                      <div style="display: flex; align-items: center; justify-content: center;gap:15px">
-                        <div style="width: 24px; height: 24px;">
-                          <svg viewBox="0 0 24 24" width="24" height="24">
+                      <div class="menu-item-wrapper">
+                        <div class="menu-item-icon">
+                          <div style="width: 30px; height: 30px;">
+                            <svg viewBox="0 0 24 24" width="30" height="30">
                             <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
-                          </svg>
+                            </svg>
+                          </div>
                         </div>
-                        <div>截取页面</div>
+                        <div class="menu-item-name">截取页面</div>
                       </div>
                     </button>
                   </div>
