@@ -3,7 +3,9 @@ import cssString from './shareButton.css?raw'
 import { generateQRCode } from './util/qrcode'
 import { icons } from './util/svg'
 import { captureElement, downloadScreenshot } from './util/screenshot'
-import { access } from './util/api'
+import { access, test } from './util/api'
+
+
 // 小红书ui
 // 流量统计
 
@@ -37,6 +39,9 @@ export default class extends Component {
   private mediaButtons: HTMLLIElement[] = []
   private menuContainer: HTMLDivElement | null = null
 
+  private menuOverlay: HTMLDivElement | null = null
+  private bottomMenu: HTMLDivElement | null = null
+
 
   private currentPage = 0
   private totalPages = 0
@@ -53,11 +58,7 @@ export default class extends Component {
 
 
   // 定义菜单项数据
-  private userShareOptions: shareOption[] = []
-  public addUserShareOptions(options: shareOption[]) {
-    this.userShareOptions = options
-    console.log('options')
-  }
+ 
   private shareOptions: shareOption[] = []
   private shareOptionsDefault: shareOption[] = [
     {
@@ -70,6 +71,8 @@ export default class extends Component {
         pc: async (data: any) => {
           try {
             await this.generateQRCode(data.props.url)
+
+            test()
           } catch (error) {
             console.error('生成二维码失败:', error)
           }
@@ -159,10 +162,10 @@ export default class extends Component {
       }
     },
     {
-      name: 'QQ',
+      name: 'linkedin',
       icon: {
-        mobile: icons.qqMobile,
-        pc: icons.qqPc
+        mobile: icons.linkedinMobile,
+        pc: icons.linkedinPc
       },
       shareMethods: {
         pc: async (data: any) => {
@@ -338,19 +341,6 @@ export default class extends Component {
               mediaButton.classList.remove('initial-animation');
               (mediaButton as HTMLElement).style.animationDelay = `0s`
             })
-            // mediaButton.addEventListener('click', () => {
-            //   if (!this.currentToggledButton) {
-            //     console.log('intial state')
-            //     this.currentToggledButton = mediaButton
-            //   } else if (this.currentToggledButton != mediaButton) {
-            //     this.currentToggledButton?.classList.toggle('plus--active')
-            //     this.currentToggledButton = mediaButton
-            //   } else {
-            //     this.currentToggledButton = null
-            //   }
-            //   mediaButton.classList.toggle('plus--active')
-            // })
-
 
           })
         }
@@ -359,8 +349,8 @@ export default class extends Component {
         console.log(this.shareButtonInnerElement)
         if (this.shareButtonInnerElement) {
 
-          const menuOverlay = shareButtonElement.shadowRoot.querySelector('.menu-overlay')
-          const bottomMenu = shareButtonElement.shadowRoot.querySelector('.bottom-menu')
+          this.menuOverlay = shareButtonElement.shadowRoot.querySelector('.menu-overlay')
+          this.bottomMenu = shareButtonElement.shadowRoot.querySelector('.bottom-menu')
           // const webShareApiButton = shareButtonElement.shadowRoot.querySelector('.web-share-api-button')
           this.menuContainer = shareButtonElement.shadowRoot.querySelector('.menu-container')
 
@@ -369,8 +359,8 @@ export default class extends Component {
             console.log('click')
             if (this.hasWebShareAPI) {
               this.isMenuOpen = !this.isMenuOpen
-              menuOverlay?.classList.remove('active')
-              bottomMenu?.classList.remove('active')
+              this.menuOverlay?.classList.remove('active')
+              this.bottomMenu?.classList.remove('active')
 
               const shareData = {
                 title: '分享一个链接',
@@ -395,14 +385,14 @@ export default class extends Component {
           this.shareButtonInnerElement.addEventListener('click', () => {
             console.log('click')
             this.isMenuOpen = !this.isMenuOpen
-            menuOverlay?.classList.add('active')
-            bottomMenu?.classList.add('active')
+            this.menuOverlay?.classList.add('active')
+            this.bottomMenu?.classList.add('active')
           })
 
-          menuOverlay?.addEventListener('click', () => {
+          this.menuOverlay?.addEventListener('click', () => {
             this.isMenuOpen = !this.isMenuOpen
-            menuOverlay?.classList.remove('active')
-            bottomMenu?.classList.remove('active')
+            this.menuOverlay?.classList.remove('active')
+            this.bottomMenu?.classList.remove('active')
           })
 
           // 添加触摸事件监听
@@ -486,6 +476,138 @@ export default class extends Component {
     } catch (error) {
       throw error
     }
+  }
+
+  private showScreenshotPreview = (screenshotResult: { base64: string, width: number, height: number }) => {
+    const dialog = document.createElement('dialog');
+    dialog.classList.add('screenshot-preview-dialog');
+
+    const previewContainer = document.createElement('div');
+    previewContainer.classList.add('screenshot-preview-container');
+
+    const image = document.createElement('img');
+    image.src = screenshotResult.base64;
+    image.classList.add('screenshot-preview-image');
+    
+    // 计算初始缩放比例
+    const maxWidth = window.innerWidth * 0.8;
+    const maxHeight = 450;
+    const widthRatio = maxWidth / screenshotResult.width;
+    const heightRatio = maxHeight / screenshotResult.height;
+    const initialScale = Math.min(widthRatio, heightRatio);
+    
+    // 设置初始尺寸和位置
+    image.style.width = `${screenshotResult.width}px`;
+    image.style.height = `${screenshotResult.height}px`;
+    image.style.transform = `scale(${initialScale})`;
+    image.style.transformOrigin = 'center center';
+    image.style.position = 'absolute';
+    image.style.left = '50%';
+    image.style.top = '50%';
+    image.style.transform = `translate(-50%, -50%) scale(${initialScale})`;
+
+    // 添加触摸事件处理
+    let initialDistance = 0;
+    let currentScale = initialScale;
+    const minScale = initialScale * 0.5;
+    const maxScale = initialScale * 2;
+
+    // 拖动相关变量
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
+    let currentX = 0;
+    let currentY = 0;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 1) {
+        isDragging = true;
+        startX = e.touches[0].clientX - currentX;
+        startY = e.touches[0].clientY - currentY;
+      } else if (e.touches.length === 2) {
+        const touch1 = e.touches[0];
+        const touch2 = e.touches[1];
+        initialDistance = Math.hypot(
+          touch2.clientX - touch1.clientX,
+          touch2.clientY - touch1.clientY
+        );
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 1 && isDragging) {
+        e.preventDefault();
+        currentX = e.touches[0].clientX - startX;
+        currentY = e.touches[0].clientY - startY;
+        image.style.transform = `translate(${currentX}px, ${currentY}px) scale(${currentScale})`;
+      } else if (e.touches.length === 2) {
+        e.preventDefault();
+        const touch1 = e.touches[0];
+        const touch2 = e.touches[1];
+        const currentDistance = Math.hypot(
+          touch2.clientX - touch1.clientX,
+          touch2.clientY - touch1.clientY
+        );
+
+        if (initialDistance) {
+          // 降低缩放灵敏度
+          const scale = 1 + (currentDistance / initialDistance - 1) * 0.05;
+          const newScale = Math.min(Math.max(currentScale * scale, minScale), maxScale);
+          
+          // 使用 transform 进行缩放和位移
+          image.style.transform = `translate(${currentX}px, ${currentY}px) scale(${newScale})`;
+          currentScale = newScale;
+        }
+      }
+    };
+
+    const handleTouchEnd = () => {
+      isDragging = false;
+      initialDistance = 0;
+    };
+
+    image.addEventListener('touchstart', handleTouchStart);
+    image.addEventListener('touchmove', handleTouchMove, { passive: false });
+    image.addEventListener('touchend', handleTouchEnd);
+
+    const imageContainer = document.createElement('div');
+    imageContainer.classList.add('screenshot-preview-image-container');
+    imageContainer.appendChild(image);
+
+    const buttonContainer = document.createElement('div');
+    buttonContainer.classList.add('screenshot-preview-buttons');
+
+    const downloadButton = document.createElement('button');
+    downloadButton.classList.add('screenshot-download-button');
+    downloadButton.textContent = '下载';
+    downloadButton.onclick = () => {
+      downloadScreenshot(screenshotResult.base64, 'page-screenshot.png');
+      dialog.close();
+    };
+
+    const cancelButton = document.createElement('button');
+    cancelButton.classList.add('screenshot-cancel-button');
+    cancelButton.textContent = '取消';
+    cancelButton.onclick = () => {
+      dialog.close();
+    };
+
+    buttonContainer.appendChild(downloadButton);
+    buttonContainer.appendChild(cancelButton);
+
+    previewContainer.appendChild(imageContainer);
+    previewContainer.appendChild(buttonContainer);
+    dialog.appendChild(previewContainer);
+
+    this.shareButtonInnerElement?.appendChild(dialog)
+    dialog.showModal();
+
+    // 点击对话框外部关闭
+    dialog.addEventListener('click', (e) => {
+      if (e.target === dialog) {
+        dialog.close();
+      }
+    });
   }
 
   private goToPage = (pageIndex: number) => {
@@ -611,6 +733,10 @@ export default class extends Component {
         console.log('Parsed other:', parsedOther)
         if (parsedOther && typeof parsedOther === 'object') {
           const processedOption = { ...parsedOther }
+          if (parsedOther.icon) {
+            processedOption.icon.mobile = parsedOther.icon.mobile
+            processedOption.icon.pc = parsedOther.icon.pc
+          }
           if (parsedOther.shareMethods) {
             if (parsedOther.shareMethods.pc) {
               processedOption.shareMethods.pc = new Function('return ' + parsedOther.shareMethods.pc)()
@@ -635,14 +761,17 @@ export default class extends Component {
     this.shareOptions = this.shareOptions.concat(otherOption ? [otherOption] : [])
     this.totalPages = Math.ceil(this.shareOptions.length / 5)
 
+
+    props.name = document.title
+    props.url = window.location.href
+
     return (
       <>
         <div>
           <button class="share-button-inner" >
-            <svg viewBox="0 0 24 24" width="16" height="16">
+            <svg viewBox="0 0 24 24" width="24" height="24">
               <path d='M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z' />
             </svg>
-            Share
           </button>
           {
             !this.isMobile ?
@@ -656,10 +785,19 @@ export default class extends Component {
                         hasWebShareAPI: this.hasWebShareAPI,
                       }
                     })
+                    const now = new Date();
+                    const year = now.getFullYear();
+                    const month = String(now.getMonth() + 1).padStart(2, '0');
+                    const day = String(now.getDate()).padStart(2, '0');
+                    const hours = String(now.getHours()).padStart(2, '0');
+                    const minutes = String(now.getMinutes()).padStart(2, '0');
+                    const seconds = String(now.getSeconds()).padStart(2, '0');
+                    const formattedDate = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+
                     access({
                       mediaName: option.name,
                       url: props.url,
-                      accessTime: "2025-04-25 12:00:00",
+                      accessTime: formattedDate,
                       accessLocation: "127.0.0.1",
                     })
                   }} >
@@ -693,10 +831,19 @@ export default class extends Component {
                                 hasWebShareAPI: this.hasWebShareAPI,
                               }
                             })
+                            const now = new Date();
+                            const year = now.getFullYear();
+                            const month = String(now.getMonth() + 1).padStart(2, '0');
+                            const day = String(now.getDate()).padStart(2, '0');
+                            const hours = String(now.getHours()).padStart(2, '0');
+                            const minutes = String(now.getMinutes()).padStart(2, '0');
+                            const seconds = String(now.getSeconds()).padStart(2, '0');
+                            const formattedDate = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+
                             access({
                               mediaName: item.name,
                               url: props.url,
-                              accessTime: "2025-04-25 12:00:00",
+                              accessTime: formattedDate,
                               accessLocation: "127.0.0.1",
                             })
                           }
@@ -742,13 +889,18 @@ export default class extends Component {
                     </button>
                     <button class="function-button" onclick={async () => {
                       try {
+                        // 先关闭移动端菜单
+                        this.isMenuOpen = false;
+                        this.menuOverlay?.classList.remove('active');
+                        this.bottomMenu?.classList.remove('active');
+
                         const element = document.querySelector('.screenshot') as HTMLElement;
                         if (element) {
-                          const base64Image = await captureElement(element, {
+                          const result = await captureElement(element, {
                             scale: 2,
                             backgroundColor: '#ffffff'
                           });
-                          downloadScreenshot(base64Image, 'page-screenshot.png');
+                          this.showScreenshotPreview(result);
                         }
                       } catch (error) {
                         console.error('截图失败:', error);
@@ -756,13 +908,9 @@ export default class extends Component {
                     }}>
                       <div class="menu-item-wrapper">
                         <div class="menu-item-icon">
-                          <div style="width: 30px; height: 30px;">
-                            <svg viewBox="0 0 24 24" width="30" height="30">
-                            <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
-                            </svg>
-                          </div>
+                          <div style="width: 30px; height: 30px;" innerHTML={icons.screenshotMobile}></div>
                         </div>
-                        <div class="menu-item-name">截取页面</div>
+                        <div class="menu-item-name">截取元素</div>
                       </div>
                     </button>
                   </div>

@@ -12,27 +12,38 @@
 <style>
   .screenshot {
     width: 100px;
-    height: 100px;
-    background-color: #f00;
+    height: 200px;
+    background-color:green;
   }
 </style>
 
 <body>
-  <share-button name="test" url="{add(1,2)}" ></share-button>
-  <dialog id="dialog"> 
+  <share-button  style="--share-menu-button-background-color: red;" other='{"name":"自定义平台","icon":{"mobile":"<div style=padding-top:5px;font-size:15px;font-weight:1000>测试<div>","pc":"<div>测试<div>"},"shareMethods":{"pc":"function(data) {  }","mobile":[{"name":"移动端分享","method":"function(data) { console.log( data); }"}]}}'></share-button>
+  <div class="screenshot"> 
     <div>
       <h1>Hello</h1>
     </div>
-  </dialog>
+  </div>
+  <button class="test-button">
+    点击
+  </button>
 </body>
 
 
 <script>
+  const testButton = document.querySelector('.test-button')
+  testButton.addEventListener('click', () => {
+    const shareButton = document.querySelector('share-button')
+    shareButton.setAttribute('data-theme', 'system')
+  })
+
+
+  
 const customShareOption = {
-    name: "自定义平台",
+    name: "测试平台",
     icon: {
-      mobile: "mobile-icon-svg",
-      pc: "pc-icon-svg"
+      mobile: "<div style=color:red;padding-top:5px;font-size:15px;font-weight:1000>微博<div>",
+      pc: "<div>测试<div>"
     },
     shareMethods: {
       pc: "function(data) { console.log('PC分享:', data); }",

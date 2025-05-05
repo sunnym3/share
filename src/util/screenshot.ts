@@ -8,16 +8,22 @@ interface ScreenshotOptions {
     logging?: boolean;
 }
 
+interface ScreenshotResult {
+    base64: string;
+    width: number;
+    height: number;
+}
+
 /**
  * 对指定DOM元素进行截图
  * @param element - 要截图的DOM元素
  * @param options - 截图选项
- * @returns Promise<string> - 返回base64格式的图片数据
+ * @returns Promise<ScreenshotResult> - 返回base64格式的图片数据和尺寸
  */
 export async function captureElement(
     element: HTMLElement,
     options: ScreenshotOptions = {}
-): Promise<string> {
+): Promise<ScreenshotResult> {
     // 默认配置
     const defaultOptions: ScreenshotOptions = {
         backgroundColor: '#ffffff',
@@ -64,8 +70,12 @@ export async function captureElement(
             }
         });
         
-        // 转换为base64图片数据
-        return canvas.toDataURL('image/png');
+        // 返回图片数据和尺寸
+        return {
+            base64: canvas.toDataURL('image/png'),
+            width: canvas.width,
+            height: canvas.height
+        };
     } catch (error) {
         console.error('截图失败:', error);
         throw error;
