@@ -3,7 +3,7 @@ import cssString from './shareButton.css?raw'
 import { generateQRCode } from './util/qrcode'
 import { icons } from './util/svg'
 import { captureElement, downloadScreenshot } from './util/screenshot'
-import { access, test } from './util/api'
+import { access } from './util/api'
 
 
 // 小红书ui
@@ -56,9 +56,15 @@ export default class extends Component {
     other: String,
   }
 
+  // attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+  //   if(name === 'other'){
+  //     console.log('attributeChangedCallback other', newValue)
+
+
+  //   }
+  // }
 
   // 定义菜单项数据
- 
   private shareOptions: shareOption[] = []
   private shareOptionsDefault: shareOption[] = [
     {
@@ -71,23 +77,9 @@ export default class extends Component {
         pc: async (data: any) => {
           try {
             await this.generateQRCode(data.props.url)
-
-            test()
           } catch (error) {
             console.error('生成二维码失败:', error)
           }
-          // try {
-          //   const element = document.querySelector('.screenshot') as HTMLElement;
-          //   if (element) {
-          //     const base64Image = await captureElement(element, {
-          //       scale: 2,
-          //       backgroundColor: '#ffffff'
-          //     });
-          //     downloadScreenshot(base64Image, 'page-screenshot.png');
-          //   }
-          // } catch (error) {
-          //   console.error('截图失败:', error);
-          // }
         },
         mobile: [
           {
@@ -107,7 +99,7 @@ export default class extends Component {
       },
       shareMethods: {
         pc: async (data: any) => {
-          window.location.href = `http://connect.qq.com/widget/shareqq/index.html?url=${encodeURIComponent(data.props.url)}&sharesource=qzone&title=test&pics=&summary=&desc=test`
+          window.location.href = `https://connect.qq.com/widget/shareqq/index.html?url=${encodeURIComponent(data.props.url)}&source=${encodeURIComponent(data.props.url)}&title=${encodeURIComponent("分享链接")}&pics=&summary=&desc=${encodeURIComponent("分享链接")}`
         },
         mobile: [
           {
@@ -115,6 +107,28 @@ export default class extends Component {
             method: async (data: any) => {
               this.copyToClipboard(data.props.url)
               window.location.href = `mqq://`
+            }
+          }
+        ]
+      }
+    },
+    {
+      name: 'QQ Zone',
+      icon: {
+        mobile: icons.qqZoneMobile,
+        pc: icons.qqZonePc
+      },
+      shareMethods: {
+        pc: async (data: any) => {
+          const shareUrl = 'https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url={url}&title=分享一个链接&desc=分享一个链接&summary=分享链接&site=测试站点'
+          window.location.href = shareUrl.replace('{url}', encodeURIComponent(data.props.url))
+        },
+        mobile: [
+          {
+            name: '网页跳转',
+            method: async (data: any) => {
+              const shareUrl = 'https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url={url}&title=分享一个链接&desc=分享一个链接&summary=分享链接&site=测试站点'
+              window.location.href = shareUrl.replace('{url}', encodeURIComponent(data.props.url))
             }
           }
         ]
@@ -129,9 +143,8 @@ export default class extends Component {
       shareMethods: {
         pc: async (data: any) => {
           console.log(data)
-          const url = 'https://www.baidu.com/index.php?tn=75144485_1_dg&ch=9'
           const title = '分享一个链接'
-          window.location.href = `https://service.weibo.com/share/share.php?url=${encodeURIComponent(url)}&title=${encodeURIComponent(title)}`
+          window.location.href = `https://service.weibo.com/share/share.php?url=${encodeURIComponent(data.props.url)}&title=${encodeURIComponent(title)}`
         },
         mobile: [
           {
@@ -144,18 +157,16 @@ export default class extends Component {
             name: '跳转分享',
             method: (data: any) => {
               console.log(data)
-              const url = 'https://www.baidu.com/index.php?tn=75144485_1_dg&ch=9'
               const title = '分享一个链接'
-              window.location.href = `sinaweibo://sendweibo?show_keyboard=1&content=${encodeURIComponent(title + ' ' + url)}`
+              window.location.href = `sinaweibo://sendweibo?show_keyboard=1&content=${encodeURIComponent(title + ' ' + data.props.url)}`
             }
           },
           {
             name: '网页分享',
             method: (data: any) => {
               console.log(data)
-              const url = 'https://www.baidu.com/index.php?tn=75144485_1_dg&ch=9'
               const title = '分享一个链接'
-              window.location.href = `https://service.weibo.com/share/share.php?url=${encodeURIComponent(url)}&title=${encodeURIComponent(title)}`
+              window.location.href = `https://service.weibo.com/share/share.php?url=${encodeURIComponent(data.props.url)}&title=${encodeURIComponent(title)}`
             }
           }
         ]
@@ -169,14 +180,19 @@ export default class extends Component {
       },
       shareMethods: {
         pc: async (data: any) => {
-          window.location.href = `http://connect.qq.com/widget/shareqq/index.html?url=${encodeURIComponent(data.props.url)}&sharesource=qzone&title=test&pics=&summary=&desc=test`
+          window.location.href = `https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(data.props.url)}&title=${encodeURIComponent(data.props.url)}`
         },
         mobile: [
           {
-            name: '复制并跳转',
+            name: '网页分享',
             method: async (data: any) => {
-              this.copyToClipboard(data.props.url)
-              window.location.href = `mqq://`
+              window.location.href = `https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(data.props.url)}&title=${encodeURIComponent(data.props.url)}`
+            }
+          },
+          {
+            name: '跳转分享',
+            method: async (data: any) => {
+              window.location.href = `linkedin://share?url=${encodeURIComponent(data.props.url)}`
             }
           }
         ]
@@ -190,22 +206,21 @@ export default class extends Component {
       },
       shareMethods: {
         pc: async (data: any) => {
-          console.log(data)
           let metaArr = [
-            'og:url', 'http://java.chendahai.cn',
+            'og:url', data.props.url,
             'og:title', 'this is title',
             'og:description', 'this is desc',
-            'og:image', 'http://gg.chendahai.cn/static/image/apple.jpg',
             'og:type', 'website'
           ]
           let metaParams = metaArr.toString()
-          window.open('http://www.facebook.com/sharer.php?u=' + encodeURIComponent(`http://java.chendahai.cn/share/new?meta=${metaParams}`))
+          window.open('http://www.facebook.com/sharer.php?u=' + encodeURIComponent(`${data.props.url}/share/new?meta=${metaParams}`))
         },
         mobile: [
           {
-            name: '复制链接',
+            name: '跳转分享',
             method: async (data: any) => {
-              this.copyToClipboard(data.props.url)
+              data
+              window.location.href = `fb://feed`
             }
           }
         ]
@@ -219,14 +234,13 @@ export default class extends Component {
       },
       shareMethods: {
         pc: async (data: any) => {
-          console.log(data)
-          window.open(`https://twitter.com/intent/tweet?text=` + encodeURIComponent(`https://www.baidu.com`))
+          window.open(`https://twitter.com/intent/tweet?text=` + encodeURIComponent(data.props.url))
         },
         mobile: [
           {
-            name: '复制链接',
+            name: '跳转分享',
             method: (data: any) => {
-              this.copyToClipboard(data.props.url)
+              window.open(`https://twitter.com/intent/tweet?text=` + encodeURIComponent(data.props.url))
             }
           }
         ]
@@ -242,9 +256,15 @@ export default class extends Component {
     textArea.style.position = 'fixed'
     textArea.style.left = '-9999px'
     textArea.style.top = '0'
-    document.body.appendChild(textArea)
 
-    // 选择文本并复制
+    // 找到当前活动的dialog
+    const activeDialog = this.shareButtonInnerElement?.querySelector('share-method-mobile-dialog')
+    if (activeDialog) {
+      activeDialog.appendChild(textArea)
+    } else {
+      document.body.appendChild(textArea)
+    }
+
     textArea.focus()
     textArea.select()
 
@@ -256,11 +276,11 @@ export default class extends Component {
     }
 
     // 移除临时输入框
-    document.body.removeChild(textArea)
+    textArea.remove()
 
     // 显示复制结果提示
     const toast = document.createElement('div')
-    toast.textContent = success ? '链接已复制到剪贴板' : '复制失败，请手动复制'
+    toast.textContent = success ? text : '复制失败，请手动复制'
     toast.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.7); color: white; padding: 10px 20px; border-radius: 4px; z-index: 999999;'
     document.body.appendChild(toast)
     setTimeout(() => {
@@ -270,20 +290,6 @@ export default class extends Component {
     return success
   }
 
-  // private toggleMenu = async () => {
-  //   if (this.hasWebShareAPI && this.isMobile) {
-  //     try {
-  //       const shareData = {
-  //       }
-  //       await navigator.share(shareData)
-  //       return
-  //     } catch (err) {
-  //       console.log('Error sharing:', err)
-  //     }
-  //   }
-
-  //   this.update()
-  // }
 
   private checkDeviceType = () => {
     const userAgent = navigator.userAgent.toLowerCase()
@@ -415,7 +421,6 @@ export default class extends Component {
   }
 
   private generateQRCode = async (url: string) => {
-    console.log(cssString)
     try {
       const qrCodeUrl = await generateQRCode(url, {
         width: 200,
@@ -479,32 +484,35 @@ export default class extends Component {
   }
 
   private showScreenshotPreview = (screenshotResult: { base64: string, width: number, height: number }) => {
+
     const dialog = document.createElement('dialog');
     dialog.classList.add('screenshot-preview-dialog');
 
     const previewContainer = document.createElement('div');
     previewContainer.classList.add('screenshot-preview-container');
 
+    // 添加点击事件阻止冒泡
+    dialog.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+
     const image = document.createElement('img');
     image.src = screenshotResult.base64;
     image.classList.add('screenshot-preview-image');
-    
+
     // 计算初始缩放比例
     const maxWidth = window.innerWidth * 0.8;
     const maxHeight = 450;
     const widthRatio = maxWidth / screenshotResult.width;
     const heightRatio = maxHeight / screenshotResult.height;
     const initialScale = Math.min(widthRatio, heightRatio);
-    
+
     // 设置初始尺寸和位置
     image.style.width = `${screenshotResult.width}px`;
     image.style.height = `${screenshotResult.height}px`;
-    image.style.transform = `scale(${initialScale})`;
     image.style.transformOrigin = 'center center';
     image.style.position = 'absolute';
-    image.style.left = '50%';
-    image.style.top = '50%';
-    image.style.transform = `translate(-50%, -50%) scale(${initialScale})`;
+    image.style.transform = `scale(${initialScale})`;
 
     // 添加触摸事件处理
     let initialDistance = 0;
@@ -522,8 +530,8 @@ export default class extends Component {
     const handleTouchStart = (e: TouchEvent) => {
       if (e.touches.length === 1) {
         isDragging = true;
-        startX = e.touches[0].clientX - currentX;
-        startY = e.touches[0].clientY - currentY;
+        startX = e.touches[0].clientX ;
+        startY = e.touches[0].clientY ;
       } else if (e.touches.length === 2) {
         const touch1 = e.touches[0];
         const touch2 = e.touches[1];
@@ -537,9 +545,12 @@ export default class extends Component {
     const handleTouchMove = (e: TouchEvent) => {
       if (e.touches.length === 1 && isDragging) {
         e.preventDefault();
-        currentX = e.touches[0].clientX - startX;
-        currentY = e.touches[0].clientY - startY;
-        image.style.transform = `translate(${currentX}px, ${currentY}px) scale(${currentScale})`;
+        currentX = e.touches[0].clientX ;
+        currentY = e.touches[0].clientY ;
+
+        let deltaX = currentX - startX;
+        let deltaY = currentY - startY;
+        image.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(${currentScale})`;
       } else if (e.touches.length === 2) {
         e.preventDefault();
         const touch1 = e.touches[0];
@@ -553,9 +564,9 @@ export default class extends Component {
           // 降低缩放灵敏度
           const scale = 1 + (currentDistance / initialDistance - 1) * 0.05;
           const newScale = Math.min(Math.max(currentScale * scale, minScale), maxScale);
-          
+
           // 使用 transform 进行缩放和位移
-          image.style.transform = `translate(${currentX}px, ${currentY}px) scale(${newScale})`;
+          image.style.transform = `scale(${newScale})`;
           currentScale = newScale;
         }
       }
@@ -582,7 +593,7 @@ export default class extends Component {
     downloadButton.textContent = '下载';
     downloadButton.onclick = () => {
       downloadScreenshot(screenshotResult.base64, 'page-screenshot.png');
-      dialog.close();
+      dialog.close();  
     };
 
     const cancelButton = document.createElement('button');
@@ -603,11 +614,11 @@ export default class extends Component {
     dialog.showModal();
 
     // 点击对话框外部关闭
-    dialog.addEventListener('click', (e) => {
-      if (e.target === dialog) {
-        dialog.close();
-      }
-    });
+    // dialog.addEventListener('click', (e) => {
+    //   if (e.target === dialog) {
+    //     dialog.close();
+    //   }
+    // });
   }
 
   private goToPage = (pageIndex: number) => {
@@ -723,7 +734,18 @@ export default class extends Component {
     dialog.showModal()
   }
 
+  private formatTimeNow = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  }
 
+  
   render(props: any) {
     const media = props.media ? JSON.parse(props.media) : null
     let otherOption = null
@@ -785,19 +807,10 @@ export default class extends Component {
                         hasWebShareAPI: this.hasWebShareAPI,
                       }
                     })
-                    const now = new Date();
-                    const year = now.getFullYear();
-                    const month = String(now.getMonth() + 1).padStart(2, '0');
-                    const day = String(now.getDate()).padStart(2, '0');
-                    const hours = String(now.getHours()).padStart(2, '0');
-                    const minutes = String(now.getMinutes()).padStart(2, '0');
-                    const seconds = String(now.getSeconds()).padStart(2, '0');
-                    const formattedDate = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-
                     access({
                       mediaName: option.name,
                       url: props.url,
-                      accessTime: formattedDate,
+                      accessTime: this.formatTimeNow(),
                       accessLocation: "127.0.0.1",
                     })
                   }} >
@@ -831,19 +844,11 @@ export default class extends Component {
                                 hasWebShareAPI: this.hasWebShareAPI,
                               }
                             })
-                            const now = new Date();
-                            const year = now.getFullYear();
-                            const month = String(now.getMonth() + 1).padStart(2, '0');
-                            const day = String(now.getDate()).padStart(2, '0');
-                            const hours = String(now.getHours()).padStart(2, '0');
-                            const minutes = String(now.getMinutes()).padStart(2, '0');
-                            const seconds = String(now.getSeconds()).padStart(2, '0');
-                            const formattedDate = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 
                             access({
                               mediaName: item.name,
                               url: props.url,
-                              accessTime: formattedDate,
+                              accessTime: this.formatTimeNow(),
                               accessLocation: "127.0.0.1",
                             })
                           }
@@ -871,7 +876,9 @@ export default class extends Component {
 
                   <div class="divider"></div>
                   <div class="other-function-board">
-                    <button class="function-button" >
+                    <button class="function-button" onclick={() => {
+                      this.copyToClipboard(props.url)
+                    }} >
                       <div class="menu-item-wrapper">
                         <div class="menu-item-icon">
                           <div style="width: 30px; height: 30px;" innerHTML={icons.copyMobile}></div>
@@ -889,12 +896,10 @@ export default class extends Component {
                     </button>
                     <button class="function-button" onclick={async () => {
                       try {
-                        // 先关闭移动端菜单
-                        this.isMenuOpen = false;
+                        this.isMenuOpen = !this.isMenuOpen;
                         this.menuOverlay?.classList.remove('active');
                         this.bottomMenu?.classList.remove('active');
-
-                        const element = document.querySelector('.screenshot') as HTMLElement;
+                        const element = document.querySelector('.share-plugin-screenshot') as HTMLElement;
                         if (element) {
                           const result = await captureElement(element, {
                             scale: 2,

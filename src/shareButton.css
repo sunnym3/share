@@ -64,17 +64,17 @@
 }
 :host([data-theme="light"]) {
   /* pc */
-  --share-menu-item-pc-gradient-start: yellow;
-  --share-menu-item-pc-gradient-end: red;
+  --share-menu-item-pc-gradient-start: #ff003c;
+  --share-menu-item-pc-gradient-end: #c648c8;
   --share-menu-item-pc-gradient-angle: 45deg;
-  --share-menu-item-pc-hover-color: blue;
+  --share-menu-item-pc-hover-color: #ff003c;
   /* mobile */
   /* background color */
   --share-menu-mobile-background-color: white;
-  --share-menu-mobile-menu-item-icon-background-color:gray;
+  --share-menu-mobile-menu-item-icon-background-color:#e0e0e052;
    /* header */
-  --share-menu-mobile-header-href-color: #999;
-  --share-menu-mobile-header-intro-color: #fff;
+  --share-menu-mobile-header-href-color: #666;
+  --share-menu-mobile-header-intro-color: #333;
   /* pagination */
   --share-menu-mobile-pagination-dot-color: #444;
   --share-menu-mobile-pagination-dot-active-color: #fff;
@@ -84,25 +84,25 @@
   --share-menu-mobile-button-color: black;
 }
 :host([data-theme="system"]) {
-  /* pc */
-  --share-menu-item-pc-gradient-start: green;
-  --share-menu-item-pc-gradient-end: red;
-  --share-menu-item-pc-gradient-angle: 45deg;
-  --share-menu-item-pc-hover-color: blue;
-  /* mobile */
-  /* background color */
-  --share-menu-mobile-background-color: purple;
-  --share-menu-mobile-menu-item-icon-background-color: pink;
-   /* header */
-  --share-menu-mobile-header-href-color: #999;
-  --share-menu-mobile-header-intro-color: #fff;
-  /* pagination */
-  --share-menu-mobile-pagination-dot-color: #444;
-  --share-menu-mobile-pagination-dot-active-color: #fff;
-  /* divider */
-  --share-menu-mobile-divider-color: #333;
-  /* button */
-  --share-menu-mobile-button-color: black;
+   /* pc */
+   --share-menu-item-pc-gradient-start: #ff003c;
+   --share-menu-item-pc-gradient-end: #c648c8;
+   --share-menu-item-pc-gradient-angle: 45deg;
+   --share-menu-item-pc-hover-color: #ff003c;
+   /* mobile */
+   /* background color */
+   --share-menu-mobile-background-color: white;
+   --share-menu-mobile-menu-item-icon-background-color:#e0e0e052;
+    /* header */
+   --share-menu-mobile-header-href-color: #666;
+   --share-menu-mobile-header-intro-color: #333;
+   /* pagination */
+   --share-menu-mobile-pagination-dot-color: #444;
+   --share-menu-mobile-pagination-dot-active-color: #fff;
+   /* divider */
+   --share-menu-mobile-divider-color: #333;
+   /* button */
+   --share-menu-mobile-button-color: black;
 }
 
 .share-button-inner {
@@ -110,7 +110,7 @@
   width: 60px;
   height: 60px;
 
-  background-color:var(--share-menu-button-background-color,gray);
+  background:transparent;
 
   border-radius: 50%;
   border: none;
@@ -637,9 +637,9 @@
 
 .screenshot-preview-image {
   /* display: block; */
-   overflow: auto; 
-  margin: auto; 
-  z-index: 1;
+   /* overflow: auto;  */
+  /* margin: auto;  */
+  /* z-index: 1; */
 }
 
 .screenshot-preview-buttons {

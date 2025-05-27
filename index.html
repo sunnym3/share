@@ -10,18 +10,22 @@
  
 </head>
 <style>
-  .screenshot {
+  .share-plugin-screenshot {
     width: 100px;
-    height: 200px;
+    height: 100px;
     background-color:green;
   }
 </style>
 
 <body>
-  <share-button  style="--share-menu-button-background-color: red;" other='{"name":"自定义平台","icon":{"mobile":"<div style=padding-top:5px;font-size:15px;font-weight:1000>测试<div>","pc":"<div>测试<div>"},"shareMethods":{"pc":"function(data) {  }","mobile":[{"name":"移动端分享","method":"function(data) { console.log( data); }"}]}}'></share-button>
-  <div class="screenshot"> 
+
+  <share-button data-theme="dark" ></share-button>
+
+
+  <div class="share-plugin-screenshot"> 
     <div>
       <h1>Hello</h1>
+      <p>这是一段测试截图用的文章</p>
     </div>
   </div>
   <button class="test-button">
@@ -31,22 +35,18 @@
 
 
 <script>
-  const testButton = document.querySelector('.test-button')
-  testButton.addEventListener('click', () => {
-    const shareButton = document.querySelector('share-button')
-    shareButton.setAttribute('data-theme', 'system')
-  })
+  
 
 
   
 const customShareOption = {
-    name: "测试平台",
+    name: "自定义平台",
     icon: {
-      mobile: "<div style=color:red;padding-top:5px;font-size:15px;font-weight:1000>微博<div>",
-      pc: "<div>测试<div>"
+      mobile: "<div style=color:red;font-size:15px;font-weight:1000>自定义<div>",
+      pc: "<div>自定义<div>"
     },
     shareMethods: {
-      pc: "function(data) { console.log('PC分享:', data); }",
+      pc: "function(data) {window.location.href = `http://connect.qq.com/widget/shareqq/index.html?url=www.baidu.com&sharesource=qzone&title=test&pics=&summary=&desc=test` }",
       mobile: [
         {
           name: "移动端分享",
@@ -55,7 +55,8 @@ const customShareOption = {
       ]
     }
   };
-  const str = JSON.stringify(customShareOption)
-   '{"name":"自定义平台","icon":{"mobile":"mobile-icon-svg","pc":"pc-icon-svg"},"shareMethods":{"pc":"function(data) {  }","mobile":[{"name":"移动端分享","method":"function(data) { console.log("移动端分享:", data); }"}]}}'
+const str = JSON.stringify(customShareOption)
+const shareButton = document.querySelector('share-button')
+shareButton.setAttribute('other',str)
 </script>
 </html>
